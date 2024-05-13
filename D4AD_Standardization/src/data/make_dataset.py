@@ -112,22 +112,28 @@ def input_source(from_filepath=None, from_table=None, remap_field_names=False, s
 
 
 def parenthesis_related(from_df, the_field):
-    to_df = from_df
-    # field = canonical_field_name[the_field]
-    # standardized_field = get_standardized[field]
+    to_df = from_df.copy()
     field = canonical_field_name.get(the_field, the_field)
     standardized_field = get_standardized.get(field, field)
 
-    # First we remove extranous content after the hyphen
-    # e.g. "Program Management[ - Clemsen - A.S. Title IV]"
-    to_df[standardized_field] =\
-        split_on(to_df[field],
-                 " - ",
-                 n=1,
-                 get_nth_result=1)
+    # Debugging: Print the head of the original DataFrame and the specific column
+    print(f"Original DataFrame head for field '{field}':")
+    print(to_df[[field]].head())
 
-    # then we handle content immediately prior to a hyphen
-    # e.g. "Program Management[- Clemsen - A.S. Title IV]"
+    # Ensure split_on returns a single column
+    result = split_on(to_df[field], " - ", n=1, get_nth_result=1)
+    print(f"Result from split_on for field '{field}':")
+    print(result.head())
+    print(f"Result type: {type(result)}")
+
+    if isinstance(result, pd.DataFrame):
+        print(f"DataFrame detected, shape: {result.shape}")
+        result = result.iloc[:, 0]
+        print(f"Result after selecting first column: {result.head()}")
+
+    to_df[standardized_field] = result
+
+    # Handle content immediately prior to a hyphen
     regex_pattern = '''
                     ^                   # start from beginning
                     (.+?                # capture everything non-greedily ...
@@ -135,18 +141,14 @@ def parenthesis_related(from_df, the_field):
                             .)          # and continue to match any character
                     *)                  # ... as many times as we can
                     '''
-    to_df[standardized_field] =\
-        extract_values(to_df[standardized_field], regex_pattern)
+    to_df[standardized_field] = extract_values(to_df[standardized_field], regex_pattern)
 
-    # ... finally we handle odd fixed patterns that are common
-    # e.g. "Program Management[- Clemsen (orange)"
-    to_df[standardized_field] =\
-        replace_values(to_df[standardized_field], "\(orange\)")
-
-    to_df[standardized_field] =\
-        replace_values(to_df[standardized_field], "closed")
+    # Handle odd fixed patterns
+    to_df[standardized_field] = replace_values(to_df[standardized_field], "\(orange\)")
+    to_df[standardized_field] = replace_values(to_df[standardized_field], "closed")
 
     return to_df
+
 
 
 def structured_parenthesis_related(from_df, the_field):
