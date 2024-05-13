@@ -116,6 +116,11 @@ def parenthesis_related(from_df, the_field):
     field = canonical_field_name.get(the_field, the_field)
     standardized_field = get_standardized.get(field, field)
 
+    # Debugging: Check if the column exists in the DataFrame
+    if field not in to_df.columns:
+        print(f"Field '{field}' not found in DataFrame columns")
+        return to_df
+
     # Debugging: Print the head of the original DataFrame and the specific column
     print(f"Original DataFrame head for field '{field}':")
     print(to_df[[field]].head())
@@ -127,9 +132,13 @@ def parenthesis_related(from_df, the_field):
     print(f"Result type: {type(result)}")
 
     if isinstance(result, pd.DataFrame):
-        print(f"DataFrame detected, shape: {result.shape}")
-        result = result.iloc[:, 0]
-        print(f"Result after selecting first column: {result.head()}")
+        if result.empty:
+            print(f"Result DataFrame for field '{field}' is empty")
+            to_df[standardized_field] = ""
+        else:
+            print(f"DataFrame detected, shape: {result.shape}")
+            result = result.iloc[:, 0]
+            print(f"Result after selecting first column: {result.head()}")
 
     to_df[standardized_field] = result
 
