@@ -495,12 +495,11 @@ def provider_course_status(from_df):
     most_recent_entry =\
         to_df[field].dropna()\
                       .str\
-                      .split('\n', 1, expand=True)[0]
+                      .split('\n', 1)[0]
 
     #  some entries, unfortunately, are seperated by commas instead
     has_comma = most_recent_entry.str.contains(',')
-    most_recent_entry[has_comma] =\
-        most_recent_entry[has_comma].str.split(',', 1, expand=True)[0]
+    most_recent_entry[has_comma] = most_recent_entry[has_comma].str.split(',', 1)[0]
         
     suspend_like =\
         regex.compile(
