@@ -165,20 +165,22 @@ def structured_parenthesis_related(from_df, the_field):
     field = canonical_field_name.get(the_field, the_field)
     standardized_field = get_standardized.get(field, field)
 
+    # Ensure standardized_field exists in to_df
+    if standardized_field not in to_df:
+        to_df[standardized_field] = ""
+
     # Silver Version of Provider Names
     #
     # We first extract provider names from different locations
     # depending on whether the `field` starts, ends or internally
-    # has a paranethesis. 
-    # 
+    # has a parenthesis.
+    #
     # Note that we access the regex <the_name> group from the result
 
     # If provider field starts with a (...
-    if not standardized_field in to_df:
-        to_df[standardized_field] = ""
     open_parenthesis_index = to_df[field].str[0] == '('
     open_parenthesis_regex = '''
-                    (?P<paren>\(.*\)) # get the first parathesis
+                    (?P<paren>\(.*\)) # get the first parenthesis
                     (?P<the_name>.*)  # then get the actual name
                     '''
     to_df.loc[open_parenthesis_index, standardized_field] =\
@@ -192,7 +194,7 @@ def structured_parenthesis_related(from_df, the_field):
     close_parenthesis_index = to_df[field].str[-1] == ')'
     closing_parenthesis_regex = '''
                     (?P<the_name>.*)  # get the actual name
-                    (?P<paren>\(.*\)) # get the last parathensis                
+                    (?P<paren>\(.*\)) # get the last parenthesis                
                     '''
     to_df.loc[close_parenthesis_index, standardized_field] =\
         extract_values(
@@ -225,7 +227,7 @@ def structured_parenthesis_related(from_df, the_field):
         "AA Degree",
         "A.A. Degree",
         "A.A.S. Degree",
-        "AS Degree",     
+        "AS Degree",
         "Degree",
         "degree",
         "certificate",
@@ -234,14 +236,10 @@ def structured_parenthesis_related(from_df, the_field):
         "-[\s\b]Associate",
         "^\s*In\b"]
 
-    # to_df[standardized_field] =\
-    #     replace_values(to_df[standardized_field],
-    #                    degree_cert_variants,
-    #                    regex=True)
-    # I don't know why the above doesn't accept the list when it
-    # internally calls the same function below...
-    to_df[standardized_field] =\
-        to_df[standardized_field].replace(degree_cert_variants, "", regex=True)
+    # Check if the column is empty before attempting to replace
+    if not to_df[standardized_field].empty:
+        to_df[standardized_field] =\
+            to_df[standardized_field].replace(degree_cert_variants, "", regex=True)
 
     return to_df
 
