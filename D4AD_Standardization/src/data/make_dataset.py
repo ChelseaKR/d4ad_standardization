@@ -487,39 +487,33 @@ def instruction_type(from_df):
 
 
 def provider_course_status(from_df):
-    to_df = from_df
+    to_df = from_df.copy()
     field = canonical_field_name['statecomments']
 
-    most_recent_entry =\
-        to_df[field].dropna()\
-                      .str\
-                      .split('\n', 1)[0]
+    most_recent_entry = to_df[field].dropna().str.split('\n').str[0]
 
-    #  some entries, unfortunately, are seperated by commas instead
+    # some entries, unfortunately, are separated by commas instead
     has_comma = most_recent_entry.str.contains(',')
-    most_recent_entry[has_comma] = most_recent_entry[has_comma].str.split(',', 1)[0]
-        
-    suspend_like =\
-        regex.compile(
-            r'''
-            \W(to suspended)
-            |\W(not seeking)
-            |\W(must submit)
-            |\W(suspended per)
-            |\W(expir)
-            |\W(not.*approved)
-            ''',
-            flags=regex.I|regex.VERBOSE)
+    most_recent_entry[has_comma] = most_recent_entry[has_comma].str.split(',').str[0]
 
-    suspend_indices =\
-        indices_from_regex_search(most_recent_entry, suspend_like)
+    suspend_like = re.compile(
+        r'''
+        \W(to suspended)
+        |\W(not seeking)
+        |\W(must submit)
+        |\W(suspended per)
+        |\W(expir)
+        |\W(not.*approved)
+        ''',
+        flags=regex.I | regex.VERBOSE)
+
+    suspend_indices = indices_from_regex_search(most_recent_entry, suspend_like)
 
     status_field = canonical_field_name['commented_suspended_program_status']
     to_df[status_field] = False
-    to_df.loc[suspend_indices,  status_field] = True
+    to_df.loc[suspend_indices, status_field] = True
 
     return to_df
-
 
 def standardized_nongovapproval(from_df):
     to_df = from_df
