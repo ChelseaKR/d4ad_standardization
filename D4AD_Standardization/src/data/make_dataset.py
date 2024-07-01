@@ -143,7 +143,7 @@ def parenthesis_related(from_df, the_field):
     to_df[standardized_field] = result
 
     # Handle content immediately prior to a hyphen
-    regex_pattern = '''
+    regex_pattern = r'''
                     ^                   # start from beginning
                     (.+?                # capture everything non-greedily ...
                         (?:(?!-\s)      # ... except for the '- ', if it's there
@@ -153,7 +153,8 @@ def parenthesis_related(from_df, the_field):
     to_df[standardized_field] = extract_values(to_df[standardized_field], regex_pattern)
 
     # Handle odd fixed patterns
-    to_df[standardized_field] = replace_values(to_df[standardized_field], "\(orange\)")
+    if not to_df[standardized_field].empty:
+        to_df[standardized_field] = replace_values(to_df[standardized_field], r"\(orange\)")
     to_df[standardized_field] = replace_values(to_df[standardized_field], "closed")
 
     return to_df
@@ -179,7 +180,7 @@ def structured_parenthesis_related(from_df, the_field):
 
     # If provider field starts with a (...
     open_parenthesis_index = to_df[field].str[0] == '('
-    open_parenthesis_regex = '''
+    open_parenthesis_regex = r'''
                     (?P<paren>\(.*\)) # get the first parenthesis
                     (?P<the_name>.*)  # then get the actual name
                     '''
@@ -192,7 +193,7 @@ def structured_parenthesis_related(from_df, the_field):
     # note that we operate on `standardized_field` from this
     # point forward
     close_parenthesis_index = to_df[field].str[-1] == ')'
-    closing_parenthesis_regex = '''
+    closing_parenthesis_regex = r'''
                     (?P<the_name>.*)  # get the actual name
                     (?P<paren>\(.*\)) # get the last parenthesis                
                     '''
@@ -203,7 +204,7 @@ def structured_parenthesis_related(from_df, the_field):
 
     # For those fields remaining, if a ( or ) exists ....
     internal_parenthesis_index =\
-        to_df[standardized_field].str.contains('\(|\)', regex=True) &\
+        to_df[standardized_field].str.contains(r'\(|\)', regex=True) &\
             ~(close_parenthesis_index|open_parenthesis_index)
 
     to_df.loc[internal_parenthesis_index, standardized_field] =\
@@ -238,8 +239,7 @@ def structured_parenthesis_related(from_df, the_field):
 
     # Check if the column is empty before attempting to replace
     if not to_df[standardized_field].empty:
-        to_df[standardized_field] =\
-            to_df[standardized_field].replace(degree_cert_variants, "", regex=True)
+        to_df[standardized_field] = to_df[standardized_field].replace(degree_cert_variants, "", regex=True)
 
     return to_df
 
@@ -276,7 +276,7 @@ def mentions_wioa(from_df):
 
     wioa_like =\
         regex.compile(
-            '''
+            r'''
             (title\s+[IV1234]+\b\s*?)           # WOIA has 4 titles of funding in law, at end of sentence or space
             |(wioa){d<=1}                       # is called WOIA, WIA, allowed to miss a letter
             ''',
@@ -295,7 +295,7 @@ def mentions_certificate(from_df):
     to_df = from_df
     cert_like =\
         regex.compile(
-            '''
+            r'''
             (certification)
             |(certificate)
             |[\s\b](cert)[\s\b]
@@ -313,7 +313,7 @@ def mentions_associates(from_df):
     to_df = from_df    
     as_like =\
         regex.compile(
-            '''
+            r'''
             [\b\s](A\.A\.S\.)[\b\s]
             |[\b\s](A\.S\.)[\b\s]
             |[\b\s](AS\sDe)                   # AS Degree
@@ -340,11 +340,11 @@ def job_search_duration(from_df):
     # We first extract the context in which mentions of
     # job searches occur (e.g. job search, assistance with employment search, etc.)
     training_context_regex =\
-        """
+        r'''
         ((\w+\W+){0,8}        # first 8 or so words before
         (?P<job_search>job[\s\b.].*?search|assist[\w\s\b\.].*?employ\w*?\b) # help w/ job search
         (\W+\w+){0,8})       # and last 8 or so word after
-        """
+        '''
 
     # ... then we search for specific mentions of numerically qualified durations,
     # like four months. We take these as job search durations. Note there aren't
@@ -435,7 +435,7 @@ def instruction_type(from_df):
     # Note: could make DRYer
     hybrid_like =\
         regex.compile(
-            '''
+            r'''
             (hybrid){s<=1}            # is called hybrid, hybrd, hybird, etc.
             ''',
             flags=regex.I|regex.VERBOSE)
@@ -450,7 +450,7 @@ def instruction_type(from_df):
 
     inperson_like =\
         regex.compile(
-            '''
+            r'''
             \W(in person){s<=1}            # is called in person, in-person in free text
             |(in person\)){s<=1}
             |(\(in person){s<=1}
@@ -467,7 +467,7 @@ def instruction_type(from_df):
 
     remote_like =\
         regex.compile(
-            '''
+            r'''
             \b(remote){s<=1}            # is called out as remote
             |(online\))
             |(\(online)            
@@ -501,7 +501,7 @@ def provider_course_status(from_df):
         
     suspend_like =\
         regex.compile(
-            '''
+            r'''
             \W(to suspended)
             |\W(not seeking)
             |\W(must submit)
