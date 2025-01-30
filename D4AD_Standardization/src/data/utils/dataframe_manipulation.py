@@ -26,11 +26,17 @@ def replace_values(the_series, to_replace, value="", regex=False):
         )
 
 def extract_values(the_series, pat, flags=re.VERBOSE):
-    return \
-        the_series.str.extract(
-            pat=pat,
-            flags=flags
-        )
+    import pandas as pd
+    import re
+
+    if isinstance(the_series, pd.Series):
+        # Skip numeric values
+        numeric_mask = the_series.astype(str).str.match(r"^\d+(\.\d+)?$")
+        the_series.loc[numeric_mask] = the_series.loc[numeric_mask]  # Leave numeric values unchanged
+
+        return the_series.str.extract(pat=pat, flags=flags)
+    return the_series  # Return unchanged if not a Series
+
 
 def split_on(the_series, split_on_string, n=1, get_nth_result=1):
     return \

@@ -118,7 +118,18 @@ def input_source(from_filepath=None, from_table=None, remap_field_names=False, s
 def parenthesis_related(from_df, the_field):
     to_df = from_df.copy()
     field = canonical_field_name.get(the_field, the_field)
-    standardized_field = get_standardized.get(field, field)
+    # Ensure `get_standardized` is initialized properly
+    if 'get_standardized' not in globals():
+        get_standardized = {}
+
+    def get_standardized_field(field):
+        if field in get_standardized:
+            return get_standardized[field]
+        elif isinstance(field, (int, float)) or re.match(r"^\d+(\.\d+)?$", str(field)):
+            return field  # Prevent renaming numeric fields
+        return field
+
+    standardized_field = get_standardized_field(field)
 
     # Debugging: Check if the column exists in the DataFrame
     if field not in to_df.columns:
@@ -168,7 +179,18 @@ def parenthesis_related(from_df, the_field):
 def structured_parenthesis_related(from_df, the_field):
     to_df = from_df
     field = canonical_field_name.get(the_field, the_field)
-    standardized_field = get_standardized.get(field, field)
+    # Ensure `get_standardized` is initialized properly
+    if 'get_standardized' not in globals():
+        get_standardized = {}
+
+    def get_standardized_field(field):
+        if field in get_standardized:
+            return get_standardized[field]
+        elif isinstance(field, (int, float)) or re.match(r"^\d+(\.\d+)?$", str(field)):
+            return field  # Prevent renaming numeric fields
+        return field
+
+    standardized_field = get_standardized_field(field)
 
     # Ensure standardized_field exists in to_df
     if standardized_field not in to_df:

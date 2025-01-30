@@ -1,4 +1,5 @@
 import regex
+import re
 
 # Crude labor style naming, should be movded to a config file
 # or pulled from a single point
@@ -11,10 +12,16 @@ canonical_field_name =\
         'FEATURESDESCRIPTION': 'featuresdescription'
     }
 
-course_name = canonical_field_name['NAME']
-provider_name = canonical_field_name['NAME_1']
-description_field = canonical_field_name['DESCRIPTION']
-features_description_field = canonical_field_name['FEATURESDESCRIPTION']
+def get_canonical_field_name(field):
+    """ Returns a standardized field name, avoiding modifications for numeric values. """
+    if isinstance(field, (int, float)) or re.match(r"^\d+(\.\d+)?$", str(field).strip()):
+        return field  # Prevent renaming numeric fields or numeric-like strings
+    return canonical_field_name.get(field, field)
+
+course_name = get_canonical_field_name('NAME')
+provider_name = get_canonical_field_name('NAME_1')
+description_field = get_canonical_field_name('DESCRIPTION')
+features_description_field = get_canonical_field_name('FEATURESDESCRIPTION')
 
 def indices_from_regex_search(the_series, the_regex):
     return the_series.dropna()\
